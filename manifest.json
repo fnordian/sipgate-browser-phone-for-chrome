@@ -1,0 +1,17 @@
+{
+   "background": {
+      "page": "background.html"
+   },
+   "browser_action": {
+      "default_icon": "icon.png",
+      "default_popup": "popup.html"
+   },
+   "content_security_policy": "script-src 'self'; object-src 'self'",
+   "description": "Make and receive calls in your browser",
+   "manifest_version": 2,
+   "name": "sipgate browser phone",
+   "options_page": "options.html",
+   "permissions": [ "activeTab", "background", "storage", "notifications", "https://api.sipgate.com/v1/authorization/oauth/token" ],
+   "version": "1.0",
+   "web_accessible_resources": [ "options.html" ]
+}
