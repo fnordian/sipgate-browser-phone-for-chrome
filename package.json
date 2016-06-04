@@ -6,7 +6,8 @@
     "jssip": "~1.0.1",
     "react": "~15.1.0",
     "react-dom": "~15.1.0",
-    "react-tools": "~0.13.3"
+    "react-tools": "~0.13.3",
+    "requirejs": "~2.2.0"
   },
   "devDependencies": {},
   "author": "Marcus Hunger",
