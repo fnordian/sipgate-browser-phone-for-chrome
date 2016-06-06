@@ -8,6 +8,7 @@
    },
    "content_security_policy": "script-src 'self'; object-src 'self'",
    "description": "Make and receive calls in your browser",
+   "icons": {"512": "icon.png"},
    "manifest_version": 2,
    "name": "sipgate browser phone",
    "options_page": "options.html",

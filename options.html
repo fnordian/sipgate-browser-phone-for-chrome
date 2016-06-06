@@ -1,20 +1,53 @@
 <html>
 <head>
+    <link rel="stylesheet" href="node_modules/materialize-css/dist/css/materialize.min.css">
     <script src="options.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="node_modules/materialize-css/dist/js/materialize.min.js"></script>
 </head>
 <body>
-<ul>
-    <li><a id="getCredentialsLink" href="#">get credentials</a> </li>
-    <li><a id="authenticateLink" href="#">authenticate</a> </li>
-</ul>
+
 <audio id="webrtcaudio" autoplay></audio>
 
-<form>
-    <label>sipid</label>
-    <input type="text" id="sipid">
-    <label>password</label>
-    <input type="text" id="password">
-    <button id="saveSipCredentialsButton">save</button>
-</form>
+
+<div class="container">
+    <nav>
+        <div class="nav-wrapper">
+            <span class="brand-logo">&nbsp;sipgate browser phone - settings</span>
+
+        </div>
+    </nav>
+
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="col s12">
+                    <p class="flow-text">
+                        In order to use the sipgate browser phone you need to allow it to use the microphone and enter
+                        your sipid and password.
+                        You find them in your sipgate account.
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s6">
+                    <input id="sipid" type="text" class="validate">
+                    <label for="sipid">SIP-ID</label>
+                </div>
+                <div class="input-field col s6">
+                    <input id="password" type="password" class="validate">
+                    <label for="password">Password</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s6">
+                    <a id="saveSipCredentialsButton" class="waves-effect waves-light btn">save settings</a>
+                </div>
+                <div class="col s6"></div>
+            </div>
+        </form>
+    </div>
+
+</div>
 </body>
 </html>
