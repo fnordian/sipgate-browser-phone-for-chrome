@@ -103,11 +103,13 @@ chrome.storage.sync.get({
                 'failed': function (e) {
                     setDialState("idle");
                     session = undefined;
-                    console.log('call failed with cause: ' + e);
+                    console.log('call failed with: ' + e);
+                    console.log('call failed with cause: ' + e.cause);
                 },
                 'confirmed': function (e) {
                     setDialState("confirmed");
                     console.log('call confirmed');
+                    console.log(e);
                 },
                 'addstream': function (e) {
                     console.log('remote stream added');
@@ -119,6 +121,10 @@ chrome.storage.sync.get({
                     session = undefined;
                     console.log('call ended with cause: ');
                     console.log(e);
+                    if (e.cause === "RTP Timeout") {
+                        console.log("rtp timeout, boooh! " + url + " " + configuration.uri);
+                        askToReportErrors({ "user": configuration.uri, "to": url, "time": new Date().toGMTString(), "cause": e.cause });
+                    }
                 }
             };
 
@@ -155,14 +161,58 @@ chrome.storage.sync.get({
             })
         };
 
-        chrome.notifications.onButtonClicked.addListener(function(notificationId, buttonIndex) {
-            if (notificationId == "newcallnotification") {
+
+        var errors = [];
+
+        var askToReportErrors = function(error) {
+
+            errors.push(error);
+
+            chrome.notifications.create("reporterrornotification", {
+                type: "basic",
+                iconUrl: "icon.png",
+                title: "oops",
+                message: "something went wrong with the last call. may i report call errors now? this helps to improve the service.",
+                buttons: [{title:"yes"}, {title:"no"}],
+                requireInteraction: true,
+
+            })
+        };
+
+        var reportErrors = function() {
+            console.log("about to report errors");
+            console.log(errors);
+
+            var errorFormUrl = "https://docs.google.com/a/sipgate.de/forms/d/1uAIVvTHP-G7XYUX0SQ4A6LCxZuZxvXQRUh4h0GMvAn8/formResponse";
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("POST", errorFormUrl, true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("entry.988598802="+JSON.stringify(errors));
+            errors = [];
+        };
+
+        var notificationClickHandlers = {
+            "newcallnotification": function(buttonIndex) {
                 if (buttonIndex == 0) {
                     answer();
                 } else {
                     reject();
                 }
+            },
+            "reporterrornotification": function(buttonIndex) {
+                if (buttonIndex == 0) {
+                    reportErrors();
+                }
+                chrome.notifications.clear("reporterrornotification");
             }
+        };
+
+        chrome.notifications.onButtonClicked.addListener(function(notificationId, buttonIndex) {
+
+            if (notificationClickHandlers[notificationId]) {
+                notificationClickHandlers[notificationId](buttonIndex);
+            }
+
         });
     });
 });
