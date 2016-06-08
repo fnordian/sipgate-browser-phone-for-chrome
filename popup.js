@@ -39,6 +39,10 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
         globals["reject"]();
     });
 
+    
+    document.getElementById("numberinput").focus();
+    document.getElementById("numberinput").onblur = function() { document.getElementById("numberinput").focus(); }
+
     /*
     var eventHandlers = {
         'progress': function (e) {
@@ -71,3 +75,4 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
     };*/
 
 });
+
