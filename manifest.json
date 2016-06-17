@@ -13,6 +13,6 @@
    "name": "sipgate browser phone",
    "options_page": "options.html",
    "permissions": [ "activeTab", "background", "storage", "notifications", "https://api.sipgate.com/v1/authorization/oauth/token", "https://docs.google.com/a/sipgate.de/forms/d/1uAIVvTHP-G7XYUX0SQ4A6LCxZuZxvXQRUh4h0GMvAn8/formResponse" ],
-   "version": "1.3",
+   "version": "1.4",
    "web_accessible_resources": [ "options.html" ]
 }
