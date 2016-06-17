@@ -1,11 +1,19 @@
-define(["react"], function(React) {
+define(["react"], function (React) {
 
     var self;
 
     var NumberInputField = React.createClass({
         render: function () {
-            return <input type="text" id="numberinput" value={this.props.number} onKeyPress={this.props.onKeyPress}
+            return <input type="text" ref={ (ref) => { this._input = ref; } } id="numberinput" value={this.props.number}
+                          onKeyPress={this.props.onKeyPress}
                           onKeyDown={this.props.onKeyDown}/>;
+        },
+        componentDidMount: function () {
+            var input = this._input;
+            input.focus();
+            input.onblur = function () {
+                input.focus();
+            };
         }
     });
 
@@ -15,7 +23,19 @@ define(["react"], function(React) {
         },
         render: function () {
             return <a style={ {width:'100%'} } href="#" className="btn waves-effect waves-light"
-                      onClick={ () => this.handleClick() }>{this.props.value}</a>
+                      onClick={ () => this.handleClick() } >{this.props.value}</a>
+        }
+    });
+
+    var Error = React.createClass({
+        render: function () {
+            return (
+                <div>
+                    <span style= { {weight: 'bold'} }>{ this.props.message }</span>
+                    <br />
+                    <a target="_blank" href={ chrome.extension.getURL('/options.html')}>Change settings here</a>
+                </div>
+            );
         }
     });
 
@@ -90,7 +110,8 @@ define(["react"], function(React) {
                         onPress={ () => this.props.onAccept() } value="accept"/>;
                     break;
                 default:
-                    actionButton = <DialPadButton onPress={ () => {} } value="?"/>
+                    actionButton = <DialPadButton onPress={ () => {
+                } } value="?"/>
             }
 
             switch (this.props.dialState) {
@@ -143,13 +164,16 @@ define(["react"], function(React) {
             self: this,
             handlers: {},
             getInitialState: function () {
-                return {dialState: 'idle'};
+                return {dialState: 'idle', registerState: 'unregistered'};
             },
             setHandler: function (eventName, func) {
                 this["handlers"][eventName] = func;
             },
             setDialState: function (dialState) {
                 this.setState({dialState: dialState})
+            },
+            setRegisterState: function (registerState) {
+                this.setState({registerState: registerState})
             },
             render: function () {
                 var self = this;
@@ -165,15 +189,23 @@ define(["react"], function(React) {
 
                 this["dialpad"] = dialpad;
 
-                return (
+                return this.state.registerState != "failed"
+                    ? (
                     <div>
                         { dialpad }
+                    </div>
+                )
+                    : (
+                    <div>
+                        <Error message="Cannot connect to sipgate. Check your settings."/>
                     </div>
                 )
             }
         })
         ;
 
-    self = <Dialer />;
+    self =
+        <Dialer />
+    ;
     return self;
 });

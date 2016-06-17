@@ -14,7 +14,7 @@ window.setTimeout(function () {
 
         chrome.storage.sync.get([ "uri", "password" ], function(config) {
             document.getElementById("sipid").value = uriToSipid(config["uri"]);
-            document.getElementById("password").value = config["password"];
+            document.getElementById("password").value = typeof config["password"] === "undefined" ? "" : config["password"];
             document.getElementById("password").focus();
             document.getElementById("sipid").focus();
         });

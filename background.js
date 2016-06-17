@@ -21,7 +21,15 @@ chrome.storage.sync.get({
 
         jssip.debug.enable('*');
 
+        var setRegisterState = function(registerState) {
+            globals["registerState"] = registerState;
+            if (globals["registerStatePopupHandler"]) {
+                globals["registerStatePopupHandler"](registerState);
+            }
+        };
+
         if (!configuration.uri || !configuration.password) {
+            setRegisterState("failed");
             return;
         }
 
@@ -73,6 +81,16 @@ chrome.storage.sync.get({
                 }
             }
         );
+
+        userAgent.on('unregistered', function (response) {
+            setRegisterState("unregistered");
+        });
+        userAgent.on('registered', function (response, cause) {
+            setRegisterState("registered");
+        });
+        userAgent.on('registrationFailed', function (response, cause) {
+            setRegisterState("failed");
+        });
 
         var addStream = function(audio, stream) {
             jssip.rtcninja.attachMediaStream(audio, stream);
