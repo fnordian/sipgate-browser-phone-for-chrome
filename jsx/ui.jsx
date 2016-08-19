@@ -22,8 +22,15 @@ define(["react"], function (React) {
             this.props.onPress(this.props.value);
         },
         render: function () {
+            var text;
+            if (this.props.text === undefined) {
+                text = this.props.value;
+            } else {
+                text = this.props.text;
+            }
+
             return <a style={ {width:'100%'} } href="#" className="btn waves-effect waves-light"
-                      onClick={ () => this.handleClick() } >{this.props.value}</a>
+                      onClick={ () => this.handleClick() }>{text}</a>
         }
     });
 
@@ -31,7 +38,7 @@ define(["react"], function (React) {
         render: function () {
             return (
                 <div>
-                    <span style= { {weight: 'bold'} }>{ this.props.message }</span>
+                    <span style={ {weight: 'bold'} }>{ this.props.message }</span>
                     <br />
                     <a target="_blank" href={ chrome.extension.getURL('/options.html')}>Change settings here</a>
                 </div>
@@ -45,6 +52,9 @@ define(["react"], function (React) {
             return {number: ''};
         },
 
+        setNumber: function(number) {
+            this.setState({number: number})
+        },
         addDigit: function (digit) {
             this.setState({number: this.state.number + digit})
         },
@@ -164,7 +174,7 @@ define(["react"], function (React) {
             self: this,
             handlers: {},
             getInitialState: function () {
-                return {dialState: 'idle', registerState: 'unregistered'};
+                return {dialState: 'idle', registerState: 'unregistered', contacts: []};
             },
             setHandler: function (eventName, func) {
                 this["handlers"][eventName] = func;
@@ -175,6 +185,9 @@ define(["react"], function (React) {
             setRegisterState: function (registerState) {
                 this.setState({registerState: registerState})
             },
+            setContacts: function (contacts) {
+                this.setState({contacts: contacts});
+            },
             render: function () {
                 var self = this;
                 var dialpad =
@@ -184,15 +197,25 @@ define(["react"], function (React) {
                             onHangup={ () => self["handlers"]["onHangup"]() }
                             onReject={ () => self["handlers"]["onReject"]() }
                             dialState={this.state.dialState}
+                            ref="dialpad"
                         />
                     ;
 
+                var selectNumber = function(number) {
+                    return self.refs["dialpad"].setNumber(number);
+                };
+
+                var contacts = <Contacts contacts={this.state.contacts} selectNumber={selectNumber}/>;
+
                 this["dialpad"] = dialpad;
+                this["contacts"] = contacts;
 
                 return this.state.registerState != "failed"
                     ? (
                     <div>
                         { dialpad }
+                        <br />
+                        { contacts }
                     </div>
                 )
                     : (
@@ -203,6 +226,24 @@ define(["react"], function (React) {
             }
         })
         ;
+
+    var Contacts = React.createClass({
+        self: this,
+        handlers: {},
+
+        render: function () {
+
+            var self = this;
+            return <div>
+                {self.props.contacts.filter(function(c) { return('gd$phoneNumber' in c) }).map(function (c) {
+                    console.log(c);
+                    var number = "00" + c["gd$phoneNumber"][0]["uri"].replace(/[^0-9]/g, "");
+
+                    return <DialPadButton text={c.title["$t"]} value={number} onPress={self.props.selectNumber} />
+                })}
+            </div>
+        }
+    });
 
     self =
         <Dialer />
