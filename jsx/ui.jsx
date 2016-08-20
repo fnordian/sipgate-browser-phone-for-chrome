@@ -1,17 +1,19 @@
-define(["react"], function (React) {
+define(["react", "reactdom"], function (React, ReactDom) {
 
     var self;
 
     var NumberInputField = React.createClass({
         render: function () {
-            return <input type="text" ref={ (ref) => { this._input = ref; } } id="numberinput" value={this.props.number}
+            return <input type="text" ref={ (ref) => {
+                this._input = ref;
+            } } id="numberinput" value={this.props.number}
                           onKeyPress={this.props.onKeyPress}
                           onKeyDown={this.props.onKeyDown}/>;
         },
         componentDidMount: function () {
             var input = this._input;
             input.focus();
-            input.onblur = function () {
+            input.onblur = function (event) {
                 input.focus();
             };
         }
@@ -29,8 +31,11 @@ define(["react"], function (React) {
                 text = this.props.text;
             }
 
-            return <a style={ {width:'100%'} } href="#" className="btn waves-effect waves-light"
-                      onClick={ () => this.handleClick() }>{text}</a>
+            return <a style={ {width: '100%'} } href="#" className="btn waves-effect waves-light"
+                      onClick={ (event) => {
+                          event.stopPropagation();
+                          this.handleClick()
+                      } }>{text}</a>
         }
     });
 
@@ -52,17 +57,23 @@ define(["react"], function (React) {
             return {number: ''};
         },
 
-        setNumber: function(number) {
-            this.setState({number: number})
+        setNumber: function (number) {
+            this.setState({number: number});
+            if (this.props.onNumberUpdate) {
+                this.props.onNumberUpdate(number);
+            }
         },
         addDigit: function (digit) {
-            this.setState({number: this.state.number + digit})
+            var newNumber = this.state.number + digit;
+            this.setNumber(newNumber);
+
         },
         removeDigit: function () {
-            this.setState({number: this.state.number.substr(0, this.state.number.length - 1)})
+            var newNumber = this.state.number.substr(0, this.state.number.length - 1);
+            this.setNumber(newNumber);
         },
         clearNumber: function () {
-            this.setState({number: ""})
+            this.setNumber("")
         },
         handleKeyDown: function (ev) {
             var charCode = ev.keyCode;
@@ -75,22 +86,13 @@ define(["react"], function (React) {
         handleKeyPress: function (ev) {
             var charCode = ('charCode' in ev) ? ev.charCode : ev.keyCode;
             switch (charCode) {
-                case 35:
-                case 42:
-                case 48:
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 53:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    this.addDigit(String.fromCharCode(charCode));
-                    break;
                 case 13:
                     this.doDial();
+                    break;
+                default:
+                    var char = String.fromCharCode(charCode);
+                    if (char !== "")
+                        this.addDigit(char);
             }
         },
 
@@ -121,7 +123,7 @@ define(["react"], function (React) {
                     break;
                 default:
                     actionButton = <DialPadButton onPress={ () => {
-                } } value="?"/>
+                    } } value="?"/>
             }
 
             switch (this.props.dialState) {
@@ -132,14 +134,8 @@ define(["react"], function (React) {
                     actionButton2 = <DialPadButton onPress={ this.clearNumber } value="clear"/>
             }
 
-            return (
-                <div className="container">
-                    <div className="row">
-                        <div className="col s12"><NumberInputField number={this.state.number}
-                                                                   onKeyPress={ this.handleKeyPress }
-                                                                   onKeyDown={ this.handleKeyDown}
-                        /></div>
-                    </div>
+            var numberButtons = (
+                <div>
                     <div className="row">
                         <div className="col s4"><DialPadButton onPress={ this.addDigit } value="1"/></div>
                         <div className="col s4"><DialPadButton onPress={ this.addDigit } value="2"/></div>
@@ -160,6 +156,19 @@ define(["react"], function (React) {
                         <div className="col s4"><DialPadButton onPress={ this.addDigit } value="0"/></div>
                         <div className="col s4"><DialPadButton onPress={ this.addDigit } value="#"/></div>
                     </div>
+                </div>
+            );
+
+            return (
+                <div className="container">
+                    <div className="row">
+                        <div className="col s12"><NumberInputField number={this.state.number}
+                                                                   onKeyPress={ this.handleKeyPress }
+                                                                   onKeyDown={ this.handleKeyDown}
+                        /></div>
+                    </div>
+
+                    { isNaN(this.state.number) ? null: numberButtons }
                     <div className="row">
                         <div className="col s6">{ actionButton }</div>
                         <div className="col s6">{ actionButton2 }</div>
@@ -188,6 +197,21 @@ define(["react"], function (React) {
             setContacts: function (contacts) {
                 this.setState({contacts: contacts});
             },
+            setContactFilter: function (filterString) {
+                this.refs["contacts"].setContactFilter(filterString);
+            },
+            componentDidMount: function () {
+                var self = this;
+                self.mouseup = 0;
+                const addEvent = ReactDom.findDOMNode(self.refs["main"]).addEventListener || node.attachEvent;
+                addEvent("mousedown", function (e) {
+                    self.mouseup--;
+                    e.preventDefault();
+                }, false);
+                addEvent("mouseup", function () {
+                    self.mouseup++;
+                }, false);
+            },
             render: function () {
                 var self = this;
                 var dialpad =
@@ -196,33 +220,34 @@ define(["react"], function (React) {
                             onAccept={ (number) => self["handlers"]["onAccept"]() }
                             onHangup={ () => self["handlers"]["onHangup"]() }
                             onReject={ () => self["handlers"]["onReject"]() }
+                            onNumberUpdate={ self.setContactFilter }
                             dialState={this.state.dialState}
                             ref="dialpad"
                         />
                     ;
 
-                var selectNumber = function(number) {
+                var selectNumber = function (number) {
                     return self.refs["dialpad"].setNumber(number);
                 };
 
-                var contacts = <Contacts contacts={this.state.contacts} selectNumber={selectNumber}/>;
+                var contacts = <Contacts ref="contacts" contacts={this.state.contacts} selectNumber={selectNumber}/>;
 
                 this["dialpad"] = dialpad;
                 this["contacts"] = contacts;
 
                 return this.state.registerState != "failed"
                     ? (
-                    <div>
+                    <div ref="main">
                         { dialpad }
                         <br />
                         { contacts }
                     </div>
                 )
                     : (
-                    <div>
+                    <div ref="main">
                         <Error message="Cannot connect to sipgate. Check your settings."/>
                     </div>
-                )
+                );
             }
         })
         ;
@@ -231,16 +256,40 @@ define(["react"], function (React) {
         self: this,
         handlers: {},
 
+        getInitialState: function () {
+            return {filterString: ""};
+        },
+        setContactFilter: function (filterString) {
+            this.setState({filterString: filterString});
+        },
+        contactFilter: function (contact) {
+            return (contact.title["$t"] !== undefined
+                && contact.title["$t"].toLowerCase().indexOf(this.state.filterString.toLowerCase()) != -1
+            );
+        },
+
         render: function () {
 
             var self = this;
             return <div>
-                {self.props.contacts.filter(function(c) { return('gd$phoneNumber' in c) }).map(function (c) {
-                    console.log(c);
-                    var number = "00" + c["gd$phoneNumber"][0]["uri"].replace(/[^0-9]/g, "");
+                {
+                    self.state.filterString !== "" ?
+                        self.props.contacts
+                            .filter(function (c) {
+                                return ('gd$phoneNumber' in c) && (c["gd$phoneNumber"][0]["uri"] !== undefined)
+                            })
+                            .filter(self.contactFilter)
+                            .slice(0, 5)
+                            .map(function (c) {
+                                console.log(c);
 
-                    return <DialPadButton text={c.title["$t"]} value={number} onPress={self.props.selectNumber} />
-                })}
+                                var number = "00" + c["gd$phoneNumber"][0]["uri"].replace(/[^0-9]/g, "");
+
+                                return <DialPadButton text={c.title["$t"]} value={number}
+                                                      onPress={self.props.selectNumber}/>
+                            })
+                        : null
+                }
             </div>
         }
     });

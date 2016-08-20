@@ -236,3 +236,25 @@ chrome.storage.sync.get({
 });
 
 
+var getContacts = function(token) {
+    var x = new XMLHttpRequest();
+    x.open('GET', 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=1000');
+    x.onload = function() {
+        var response = JSON.parse(x.response);
+        globals["contacts"] = response.feed.entry;
+    };
+    x.setRequestHeader('Authorization', "Bearer " + token);
+    x.send();
+};
+
+chrome.identity.getAuthToken({
+    interactive: false
+}, function(token) {
+    if (chrome.runtime.lastError) {
+        alert(chrome.runtime.lastError.message);
+        return;
+    }
+
+
+    getContacts(token);
+});

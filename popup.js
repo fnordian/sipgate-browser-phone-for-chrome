@@ -44,31 +44,8 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
         globals["reject"]();
     });
 
+    dialer.setContacts(globals["contacts"]);
 
-
-    var getContacts = function(token) {
-        var x = new XMLHttpRequest();
-        x.open('GET', 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=1000');
-        x.onload = function() {
-            var response = JSON.parse(x.response);
-            console.log(response);
-            dialer.setContacts(response.feed.entry);
-        };
-        x.setRequestHeader('Authorization', "Bearer " + token);
-        x.send();
-    };
-
-    chrome.identity.getAuthToken({
-        interactive: true
-    }, function(token) {
-        if (chrome.runtime.lastError) {
-            alert(chrome.runtime.lastError.message);
-            return;
-        }
-
-
-        getContacts(token);
-    });
 
 
 

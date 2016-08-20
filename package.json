@@ -8,7 +8,7 @@
     "react-dom": "~15.1.0",
     "react-tools": "~0.13.3",
     "requirejs": "~2.2.0",
-    "materialize-css": "~0.97.6",
+    "materialize-css": "~0.97.7",
     "jquery": "~2.2.4"
   },
   "devDependencies": {},

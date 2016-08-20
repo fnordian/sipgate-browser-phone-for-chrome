@@ -16,7 +16,7 @@
    "version": "1.4",
    "web_accessible_resources": [ "options.html" ],
    "oauth2": {
-      "client_id": "704000217613-s4tqpnadbt5d6nlrf4aa4ipke3l9bl0d.apps.googleusercontent.com",
+      "client_id": "704000217613-8s6nate1em2a7smnb5iqj0djl8q4p7ti.apps.googleusercontent.com",
       "scopes": [
          "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/contacts.readonly"
       ]
