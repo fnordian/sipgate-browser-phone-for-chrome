@@ -56,9 +56,9 @@ chrome.storage.sync.get({
                         //dialer.setDialState("incoming");
                         session = newSession;
 
-                        reportIncomingCall();
+                        reportIncomingCall((data.request.from + "").match(/sip:([0-9]+)@/)[1]);
 
-                        var endEvents = ["ended", "failed", "removestream"]
+                        var endEvents = ["ended", "failed", "removestream"];
                         for (var i in endEvents) {
                             newSession.on(endEvents[i], function () {
                                 setDialState("idle");
@@ -171,13 +171,14 @@ chrome.storage.sync.get({
             session.answer();
         };
 
-        var reportIncomingCall = function () {
+        var reportIncomingCall = function (caller) {
+            console.log("orignator: " + caller);
             setDialState("incoming");
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
                 iconUrl: "icon.png",
                 title: "incoming call",
-                message: "there is an incoming call",
+                message: findContactByNumber(caller),
                 buttons: [{title: "accept"}, {title: "reject"}],
                 requireInteraction: true,
 
@@ -285,6 +286,31 @@ var gapiRequest = function (method, url, data, onSuccess, onError) {
         x.send();
     });
 
+};
+
+var findContactByNumber = function(number) {
+    var strippedNumber = number.match(/^0+(.*)$/)[1];
+    console.log("stripped number: " + strippedNumber);
+    var filterContactByNumber = function(c) {
+        if (c["gd$phoneNumber"]) {
+            for (i = 0; i < c["gd$phoneNumber"].length; i++ ) {
+                var cNumber = c["gd$phoneNumber"][i]["uri"].replace(/[^0-9]/g, "");
+                if (cNumber.indexOf(strippedNumber) != -1) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    if (globals["contacts"]) {
+        result = globals["contacts"].filter(filterContactByNumber);
+        if (result.length > 0) {
+            return result[0].title["$t"];
+        } else {
+            return number;
+        }
+    }
 };
 
 var getContacts = function () {
