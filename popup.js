@@ -46,7 +46,4 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
 
     dialer.setContacts(globals["contacts"]);
 
-
-
-
 });

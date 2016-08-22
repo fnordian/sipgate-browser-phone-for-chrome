@@ -273,7 +273,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
             var self = this;
             return <div>
                 {
-                    self.state.filterString !== "" ?
+                    (self.state.filterString !== "" && self.props.contacts !== undefined) ?
                         self.props.contacts
                             .filter(function (c) {
                                 return ('gd$phoneNumber' in c) && (c["gd$phoneNumber"][0]["uri"] !== undefined)

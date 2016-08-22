@@ -21,7 +21,7 @@ chrome.storage.sync.get({
 
         jssip.debug.enable('*');
 
-        var setRegisterState = function(registerState) {
+        var setRegisterState = function (registerState) {
             globals["registerState"] = registerState;
             if (globals["registerStatePopupHandler"]) {
                 globals["registerStatePopupHandler"](registerState);
@@ -92,11 +92,11 @@ chrome.storage.sync.get({
             setRegisterState("failed");
         });
 
-        var addStream = function(audio, stream) {
+        var addStream = function (audio, stream) {
             jssip.rtcninja.attachMediaStream(audio, stream);
         };
 
-        var setDialState = function(dialState) {
+        var setDialState = function (dialState) {
             globals["dialState"] = dialState;
             if (globals["dialStatePopupHandler"]) {
                 globals["dialStatePopupHandler"](dialState);
@@ -110,7 +110,7 @@ chrome.storage.sync.get({
         globals["audio"] = audio;
 
 
-        globals["call"] = function(url) {
+        globals["call"] = function (url) {
             setDialState("trying");
 
             var eventHandlers = {
@@ -141,7 +141,12 @@ chrome.storage.sync.get({
                     console.log(e);
                     if (e.cause === "RTP Timeout") {
                         console.log("rtp timeout, boooh! " + url + " " + configuration.uri);
-                        askToReportErrors({ "user": configuration.uri, "to": url, "time": new Date().toGMTString(), "cause": e.cause });
+                        askToReportErrors({
+                            "user": configuration.uri,
+                            "to": url,
+                            "time": new Date().toGMTString(),
+                            "cause": e.cause
+                        });
                     }
                 }
             };
@@ -154,26 +159,26 @@ chrome.storage.sync.get({
             session = userAgent.call(url, options);
         };
 
-        globals["hangup"] = function() {
+        globals["hangup"] = function () {
             userAgent.terminateSessions();
         };
 
-        var reject = globals["reject"] = function() {
+        var reject = globals["reject"] = function () {
             session.terminate();
         };
 
-        var answer = globals["answer"] = function() {
+        var answer = globals["answer"] = function () {
             session.answer();
         };
 
-        var reportIncomingCall = function() {
+        var reportIncomingCall = function () {
             setDialState("incoming");
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
                 iconUrl: "icon.png",
                 title: "incoming call",
                 message: "there is an incoming call",
-                buttons: [{title:"accept"}, {title:"reject"}],
+                buttons: [{title: "accept"}, {title: "reject"}],
                 requireInteraction: true,
 
             })
@@ -182,7 +187,7 @@ chrome.storage.sync.get({
 
         var errors = [];
 
-        var askToReportErrors = function(error) {
+        var askToReportErrors = function (error) {
 
             errors.push(error);
 
@@ -191,13 +196,13 @@ chrome.storage.sync.get({
                 iconUrl: "icon.png",
                 title: "oops",
                 message: "something went wrong with the last call. may i report call errors now? this helps to improve the service.",
-                buttons: [{title:"yes"}, {title:"no"}],
+                buttons: [{title: "yes"}, {title: "no"}],
                 requireInteraction: true,
 
             })
         };
 
-        var reportErrors = function() {
+        var reportErrors = function () {
             console.log("about to report errors");
             console.log(errors);
 
@@ -205,19 +210,19 @@ chrome.storage.sync.get({
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.open("POST", errorFormUrl, true);
             xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xmlhttp.send("entry.988598802="+JSON.stringify(errors));
+            xmlhttp.send("entry.988598802=" + JSON.stringify(errors));
             errors = [];
         };
 
         var notificationClickHandlers = {
-            "newcallnotification": function(buttonIndex) {
+            "newcallnotification": function (buttonIndex) {
                 if (buttonIndex == 0) {
                     answer();
                 } else {
                     reject();
                 }
             },
-            "reporterrornotification": function(buttonIndex) {
+            "reporterrornotification": function (buttonIndex) {
                 if (buttonIndex == 0) {
                     reportErrors();
                 }
@@ -225,7 +230,7 @@ chrome.storage.sync.get({
             }
         };
 
-        chrome.notifications.onButtonClicked.addListener(function(notificationId, buttonIndex) {
+        chrome.notifications.onButtonClicked.addListener(function (notificationId, buttonIndex) {
 
             if (notificationClickHandlers[notificationId]) {
                 notificationClickHandlers[notificationId](buttonIndex);
@@ -235,26 +240,69 @@ chrome.storage.sync.get({
     });
 });
 
+var gapiAuthenticated = true;
 
-var getContacts = function(token) {
-    var x = new XMLHttpRequest();
-    x.open('GET', 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=1000');
-    x.onload = function() {
-        var response = JSON.parse(x.response);
-        globals["contacts"] = response.feed.entry;
-    };
-    x.setRequestHeader('Authorization', "Bearer " + token);
-    x.send();
+var gapiAuthError = function() {
+    gapiAuthenticated = false;
 };
 
-chrome.identity.getAuthToken({
-    interactive: false
-}, function(token) {
-    if (chrome.runtime.lastError) {
-        alert(chrome.runtime.lastError.message);
-        return;
-    }
+var gapiAuthSuccess = function() {
+    gapiAuthenticated = true;
+};
 
+var gapiRequest = function (method, url, data, onSuccess, onError) {
+    chrome.identity.getAuthToken({
+        interactive: false
+    }, function (token) {
 
-    getContacts(token);
-});
+        if (chrome.runtime.lastError) {
+            console.log("cannot get authtoken: " + chrome.runtime.lastError.message);
+            gapiAuthError();
+            onError();
+            return;
+        }
+
+        var x = new XMLHttpRequest();
+
+        x.open(method, url);
+        x.onload = function () {
+            if (x.status == 200) {
+                gapiAuthSuccess();
+                onSuccess(x.response);
+            } else {
+                if (x.status == 401) {
+                    console.log("access denied, token removed");
+                    chrome.identity.removeCachedAuthToken({token: token});
+                    gapiAuthError();
+                } else {
+                    gapiAuthSuccess();
+                }
+                onError();
+            }
+        };
+
+        x.setRequestHeader('Authorization', "Bearer " + token);
+        x.send();
+    });
+
+};
+
+var getContacts = function () {
+    gapiRequest("GET", 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=1000',
+        [],
+        function (result) {
+            var response = JSON.parse(result);
+            globals["contacts"] = response.feed.entry;
+        },
+        function () {
+            console.log("unable to get contacts");
+        }
+    );
+};
+
+var pollContacts = function() {
+    getContacts();
+    setTimeout(pollContacts, 600000);
+};
+
+pollContacts();
