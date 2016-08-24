@@ -156,7 +156,12 @@ chrome.storage.sync.get({
                 mediaConstraints: {'audio': true, 'video': false}
             };
 
-            session = userAgent.call(url, options);
+            try {
+                session = userAgent.call(url, options);
+            } catch(err) {
+                setDialState("idle");
+                console.log(err);
+            }
         };
 
         globals["hangup"] = function () {
