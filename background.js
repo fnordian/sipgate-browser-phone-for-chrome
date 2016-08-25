@@ -104,6 +104,12 @@ chrome.storage.sync.get({
             if (dialState != "incoming") {
                 chrome.notifications.clear("newcallnotification");
             }
+
+            var icon = dialState == "idle" ? "icon190.png" : "callIcon.gif";
+            chrome.browserAction.setIcon({
+                path: icon
+            });
+
         };
 
         globals["userAgent"] = userAgent;

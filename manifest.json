@@ -3,7 +3,7 @@
       "page": "background.html"
    },
    "browser_action": {
-      "default_icon": "icon.png",
+      "default_icon": "icon190.png",
       "default_popup": "popup.html"
    },
    "content_scripts": [
@@ -20,7 +20,7 @@
    "options_page": "options.html",
    "permissions": [ "identity", "activeTab", "background", "storage", "notifications", "https://api.sipgate.com/v1/authorization/oauth/token", "https://docs.google.com/a/sipgate.de/forms/d/1uAIVvTHP-G7XYUX0SQ4A6LCxZuZxvXQRUh4h0GMvAn8/formResponse", "https://www.google.com/m8/feeds/contacts/*" ],
    "version": "1.5.3",
-   "web_accessible_resources": [ "options.html", "phoneinject.js" ],
+   "web_accessible_resources": [ "options.html", "phoneinject.js", "callIcon.gif", "icon.png" ],
    "oauth2": {
       "client_id": "704000217613-cl5rnmu1p13vrvaa7erecajvp3j275k4.apps.googleusercontent.com",
       "scopes": [
