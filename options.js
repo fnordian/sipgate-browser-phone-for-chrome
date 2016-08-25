@@ -13,9 +13,13 @@ window.setTimeout(function () {
         };
 
         chrome.storage.sync.get([ "uri", "password" ], function(config) {
+            $(document).ready(function() {
+                $('select').material_select();
+            });
             document.getElementById("sipid").value = uriToSipid(config["uri"]);
             document.getElementById("password").value = typeof config["password"] === "undefined" ? "" : config["password"];
             document.getElementById("password").focus();
+            document.getElementById("domain").focus();
             document.getElementById("sipid").focus();
         });
 
@@ -27,9 +31,15 @@ window.setTimeout(function () {
 
         var sipid = document.getElementById("sipid").value;
         var password = document.getElementById("password").value;
+        var domain = document.getElementById("domain").value;
+
+        if (!domain) {
+            domain = "sipgate.de";
+        }
+
         chrome.storage.sync.set({
             'ws_servers': 'wss://tls01.sipgate.de:443',
-            uri: "sip:" + sipid + "@sipgate.de",
+            uri: "sip:" + sipid + "@" + domain,
             password: password
         });
 
