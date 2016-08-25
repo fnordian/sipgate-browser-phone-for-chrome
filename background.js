@@ -96,10 +96,11 @@ chrome.storage.sync.get({
             jssip.rtcninja.attachMediaStream(audio, stream);
         };
 
-        var setDialState = function (dialState) {
+        var setDialState = function (dialState, callInfo) {
             globals["dialState"] = dialState;
+            globals["callInfo"] = callInfo;
             if (globals["dialStatePopupHandler"]) {
-                globals["dialStatePopupHandler"](dialState);
+                globals["dialStatePopupHandler"](dialState, callInfo);
             }
             if (dialState != "incoming") {
                 chrome.notifications.clear("newcallnotification");
@@ -117,7 +118,7 @@ chrome.storage.sync.get({
 
 
         globals["call"] = function (url) {
-            setDialState("trying");
+            setDialState("trying", {remote:url});
 
             var eventHandlers = {
                 'progress': function (e) {
@@ -184,7 +185,7 @@ chrome.storage.sync.get({
 
         var reportIncomingCall = function (caller) {
             console.log("orignator: " + caller);
-            setDialState("incoming");
+            setDialState("incoming", { remote: caller });
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
                 iconUrl: "icon.png",
@@ -318,10 +319,10 @@ var findContactByNumber = function(number) {
         result = globals["contacts"].filter(filterContactByNumber);
         if (result.length > 0) {
             return result[0].title["$t"];
-        } else {
-            return number;
         }
     }
+
+    return number;
 };
 
 var getContacts = function () {

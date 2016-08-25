@@ -18,8 +18,8 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
     var audio = globals["audio"];
     var addStream = globals["addStream"];
 
-    globals["dialStatePopupHandler"] = function(dialState) {
-        dialer.setDialState(dialState);
+    globals["dialStatePopupHandler"] = function(dialState, callInfo) {
+        dialer.setDialState(dialState, callInfo);
     };
 
     globals["registerStatePopupHandler"] = function(registerState) {
@@ -27,7 +27,7 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
     };
 
 
-    dialer.setDialState(globals["dialState"]);
+    dialer.setDialState(globals["dialState"], globals["callInfo"]);
     dialer.setRegisterState(globals["registerState"]);
 
     dialer.setHandler("onDial", function (number) {

@@ -159,14 +159,22 @@ define(["react", "reactdom"], function (React, ReactDom) {
                 </div>
             );
 
+            statusText = this.props.dialState === "idle" || !this.props.callInfo
+                ? "type number or name to call"
+                : "call with " + this.props.callInfo.remote;
+
             return (
                 <div className="container">
                     <div className="row">
                         <div className="col s12"><NumberInputField number={this.state.number}
                                                                    onKeyPress={ this.handleKeyPress }
                                                                    onKeyDown={ this.handleKeyDown}
-                        /></div>
+                        />
+                            <p>{statusText}</p>
+                        </div>
                     </div>
+
+
 
                     { isNaN(this.state.number) ? null: numberButtons }
                     <div className="row">
@@ -183,13 +191,17 @@ define(["react", "reactdom"], function (React, ReactDom) {
             self: this,
             handlers: {},
             getInitialState: function () {
-                return {dialState: 'idle', registerState: 'unregistered', contacts: []};
+                return {dialState: 'idle', callInfo: {}, registerState: 'unregistered', contacts: []};
             },
             setHandler: function (eventName, func) {
                 this["handlers"][eventName] = func;
             },
-            setDialState: function (dialState) {
-                this.setState({dialState: dialState})
+            setDialState: function (dialState, callInfo = {}) {
+                if (Object.keys(callInfo ).length > 0) {
+                    this.setState({dialState: dialState, callInfo: callInfo});
+                } else {
+                    this.setState({dialState: dialState});
+                }
             },
             setRegisterState: function (registerState) {
                 this.setState({registerState: registerState})
@@ -222,6 +234,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
                             onReject={ () => self["handlers"]["onReject"]() }
                             onNumberUpdate={ self.setContactFilter }
                             dialState={this.state.dialState}
+                            callInfo={this.state.callInfo}
                             ref="dialpad"
                         />
                     ;
