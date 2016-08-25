@@ -336,4 +336,27 @@ var pollContacts = function() {
     setTimeout(pollContacts, 600000);
 };
 
+
 pollContacts();
+
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        if (sender.tab) {
+            // from content-script
+        }
+
+        console.log("message received: " + request);
+        console.log(request);
+
+        if (request.dialNumber) {
+
+            globals["call"](request.dialNumber);
+        } else {
+            console.log(sender.tab ?
+            "from a content script:" + sender.tab.url :
+                "from the extension");
+            if (request.greeting == "hello")
+                sendResponse({farewell: "goodbye"});
+        }
+    });
