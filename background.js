@@ -118,7 +118,7 @@ chrome.storage.sync.get({
 
 
         globals["call"] = function (url) {
-            setDialState("trying", {remote:url});
+            setDialState("trying", {remote: url});
 
             var eventHandlers = {
                 'progress': function (e) {
@@ -165,7 +165,7 @@ chrome.storage.sync.get({
 
             try {
                 session = userAgent.call(url, options);
-            } catch(err) {
+            } catch (err) {
                 setDialState("idle");
                 console.log(err);
             }
@@ -185,12 +185,13 @@ chrome.storage.sync.get({
 
         var reportIncomingCall = function (caller) {
             console.log("orignator: " + caller);
-            setDialState("incoming", { remote: caller });
+            setDialState("incoming", {remote: caller});
+            var contact = findContactByNumber(caller);
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
-                iconUrl: "icon.png",
+                iconUrl: contact.photoLink ? contact.photoLink : "icon.png",
                 title: "incoming call",
-                message: findContactByNumber(caller),
+                message: contact.title,
                 buttons: [{title: "accept"}, {title: "reject"}],
                 requireInteraction: true,
 
@@ -255,11 +256,11 @@ chrome.storage.sync.get({
 
 var gapiAuthenticated = true;
 
-var gapiAuthError = function() {
+var gapiAuthError = function () {
     gapiAuthenticated = false;
 };
 
-var gapiAuthSuccess = function() {
+var gapiAuthSuccess = function () {
     if (!gapiAuthenticated) {
         setTimeout(getContacts, 2000);
     }
@@ -270,7 +271,7 @@ var gapiRequest = function (method, url, data, onSuccess, onError, interactive) 
     interactive = typeof interactive !== 'undefined' ? interactive : false;
     var isAuthRetry = false;
 
-    var doRequest = function() {
+    var doRequest = function () {
 
         chrome.identity.getAuthToken({
             interactive: interactive
@@ -291,7 +292,7 @@ var gapiRequest = function (method, url, data, onSuccess, onError, interactive) 
             x.onload = function () {
                 if (x.status == 200) {
                     gapiAuthSuccess();
-                    onSuccess(x.response);
+                    onSuccess(x.response, token);
                 } else {
                     if (x.status == 401) {
                         if (!isAuthRetry) {
@@ -321,12 +322,12 @@ var gapiRequest = function (method, url, data, onSuccess, onError, interactive) 
     return doRequest();
 };
 
-var findContactByNumber = function(number) {
+var findContactByNumber = function (number) {
     var strippedNumber = number.match(/^0+(.*)$/)[1];
     console.log("stripped number: " + strippedNumber);
-    var filterContactByNumber = function(c) {
+    var filterContactByNumber = function (c) {
         if (c["gd$phoneNumber"]) {
-            for (i = 0; i < c["gd$phoneNumber"].length; i++ ) {
+            for (i = 0; i < c["gd$phoneNumber"].length; i++) {
                 var cNumber = c["gd$phoneNumber"][i]["uri"].replace(/[^0-9]/g, "");
                 if (cNumber.indexOf(strippedNumber) != -1) {
                     return true;
@@ -339,19 +340,32 @@ var findContactByNumber = function(number) {
     if (globals["contacts"]) {
         result = globals["contacts"].filter(filterContactByNumber);
         if (result.length > 0) {
-            return result[0].title["$t"];
+            return {title: result[0].title["$t"], photoLink: result[0].photoLink};
         }
     }
 
-    return number;
+    return {title: number};
 };
 
 var getContacts = function () {
+    var enrichContactPhoto = function (contact, token) {
+        if (contact.link && contact.link.length > 3) {
+            photolink = contact.link[0].href + "?access_token=" + token;
+        } else {
+            photolink = "defaultavatar.png";
+        }
+        contact.photoLink = photolink;
+
+        return contact;
+    };
+
     gapiRequest("GET", 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=1000',
         [],
-        function (result) {
+        function (result, token) {
             var response = JSON.parse(result);
-            globals["contacts"] = response.feed.entry;
+            globals["contacts"] = response.feed.entry.map(function (c) {
+                return enrichContactPhoto(c, token)
+            });
         },
         function () {
             console.log("unable to get contacts");
@@ -359,7 +373,7 @@ var getContacts = function () {
     );
 };
 
-var pollContacts = function() {
+var pollContacts = function () {
     getContacts();
     setTimeout(pollContacts, 600000);
 };
@@ -369,8 +383,7 @@ pollContacts();
 
 
 chrome.runtime.onMessage.addListener(
-
-    function(request, sender, sendResponse) {
+    function (request, sender, sendResponse) {
         if (sender.tab) {
             // from content-script
         }
@@ -383,13 +396,17 @@ chrome.runtime.onMessage.addListener(
 
             globals["call"](request.dialNumber);
         } else if (request.request === "requestGoogleAuthorization") {
-            var response = function(autherror) {
+            var response = function (autherror) {
                 console.log("sending response " + autherror);
                 sendResponse({autherror: autherror});
             };
             gapiRequest("GET", "https://www.google.com/m8/feeds/contacts", [],
-                function() { response(false) },
-                function() { response(!gapiAuthenticated)},
+                function () {
+                    response(false)
+                },
+                function () {
+                    response(!gapiAuthenticated)
+                },
                 request.interactive);
         } else {
             console.log(sender.tab ?

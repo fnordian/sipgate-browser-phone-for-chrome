@@ -39,6 +39,29 @@ define(["react", "reactdom"], function (React, ReactDom) {
         }
     });
 
+    var Contact = React.createClass({
+        handleClick: function () {
+            this.props.onPress(this.props.value);
+        },
+        render: function () {
+            var text;
+            if (this.props.text === undefined) {
+                text = this.props.value;
+            } else {
+                text = this.props.text;
+            }
+
+            return <li className="collection-item avatar">
+                <img src={this.props.img} alt="" className="circle"/>
+                <span className="title">{text}</span>
+                <p onClick={ (event) => {
+                          event.stopPropagation();
+                          this.handleClick()
+                      } }>{this.props.value}</p>
+            </li>
+        }
+    });
+
     var Error = React.createClass({
         render: function () {
             return (
@@ -123,7 +146,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
                     break;
                 default:
                     actionButton = <DialPadButton onPress={ () => {
-                    } } value="?"/>
+                } } value="?"/>
             }
 
             switch (this.props.dialState) {
@@ -175,8 +198,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
                     </div>
 
 
-
-                    { isNaN(this.state.number) ? null: numberButtons }
+                    { isNaN(this.state.number) ? null : numberButtons }
                     <div className="row">
                         <div className="col s6">{ actionButton }</div>
                         <div className="col s6">{ actionButton2 }</div>
@@ -197,7 +219,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
                 this["handlers"][eventName] = func;
             },
             setDialState: function (dialState, callInfo = {}) {
-                if (Object.keys(callInfo ).length > 0) {
+                if (Object.keys(callInfo).length > 0) {
                     this.setState({dialState: dialState, callInfo: callInfo});
                 } else {
                     this.setState({dialState: dialState});
@@ -284,7 +306,7 @@ define(["react", "reactdom"], function (React, ReactDom) {
         render: function () {
 
             var self = this;
-            return <div>
+            return <div><ul className="collection">
                 {
                     (self.state.filterString !== "" && self.props.contacts !== undefined) ?
                         self.props.contacts
@@ -298,12 +320,12 @@ define(["react", "reactdom"], function (React, ReactDom) {
 
                                 var number = "00" + c["gd$phoneNumber"][0]["uri"].replace(/[^0-9]/g, "");
 
-                                return <DialPadButton text={c.title["$t"]} value={number}
-                                                      onPress={self.props.selectNumber}/>
+                                return <Contact img={c.photoLink} text={c.title["$t"]} value={number}
+                                                onPress={self.props.selectNumber}/>
                             })
                         : null
                 }
-            </div>
+            </ul></div>
         }
     });
 
