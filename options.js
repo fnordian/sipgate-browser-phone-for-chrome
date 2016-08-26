@@ -1,8 +1,7 @@
-
 window.setTimeout(function () {
 
-    var init = function() {
-        var uriToSipid = function(uri) {
+    var init = function () {
+        var uriToSipid = function (uri) {
             var ret = /sip:(.*)@/.exec(uri);
 
             if (ret !== null && ret.length > 1) {
@@ -12,8 +11,8 @@ window.setTimeout(function () {
             }
         };
 
-        chrome.storage.sync.get([ "uri", "password" ], function(config) {
-            $(document).ready(function() {
+        chrome.storage.sync.get(["uri", "password"], function (config) {
+            $(document).ready(function () {
                 $('select').material_select();
             });
             document.getElementById("sipid").value = uriToSipid(config["uri"]);
@@ -27,7 +26,7 @@ window.setTimeout(function () {
 
     init();
 
-    document.getElementById("saveSipCredentialsButton").onclick = function(e) {
+    document.getElementById("saveSipCredentialsButton").onclick = function (e) {
 
         var sipid = document.getElementById("sipid").value;
         var password = document.getElementById("password").value;
@@ -46,7 +45,27 @@ window.setTimeout(function () {
         chrome.runtime.reload()
     };
 
+    document.getElementById("requestGoogleAuthorizationButton").onclick = function (e) {
+        requestGoogleAuthorization(true);
+        e.preventDefault();
+    }
+
 });
+
+var showGoogleAuthorizationRequest = function (show) {
+    document.getElementById("requestGoogleAuthorization").style.display = show ? "block" : "none";
+};
+
+var requestGoogleAuthorization = function (interactive) {
+    console.log("sending request");
+
+    chrome.extension.sendMessage({request: "requestGoogleAuthorization", interactive: interactive}, function (response) {
+        console.log("response received");
+        console.log(response);
+
+        showGoogleAuthorizationRequest(interactive ? false : response.autherror);
+    });
+};
 
 
 navigator.getUserMedia = navigator.getUserMedia ||
@@ -58,4 +77,7 @@ var constraints = {
 };
 var audio = document.querySelector('webrtcaudio');
 
-navigator.getUserMedia(constraints, function() {}, function() {});
+navigator.getUserMedia(constraints, function () {
+}, function () {
+});
+requestGoogleAuthorization(false);

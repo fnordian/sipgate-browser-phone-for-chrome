@@ -260,44 +260,65 @@ var gapiAuthError = function() {
 };
 
 var gapiAuthSuccess = function() {
+    if (!gapiAuthenticated) {
+        setTimeout(getContacts, 2000);
+    }
     gapiAuthenticated = true;
 };
 
-var gapiRequest = function (method, url, data, onSuccess, onError) {
-    chrome.identity.getAuthToken({
-        interactive: false
-    }, function (token) {
+var gapiRequest = function (method, url, data, onSuccess, onError, interactive) {
+    interactive = typeof interactive !== 'undefined' ? interactive : false;
+    var isAuthRetry = false;
 
-        if (chrome.runtime.lastError) {
-            console.log("cannot get authtoken: " + chrome.runtime.lastError.message);
-            gapiAuthError();
-            onError();
-            return;
-        }
+    var doRequest = function() {
 
-        var x = new XMLHttpRequest();
+        chrome.identity.getAuthToken({
+            interactive: interactive
+        }, function (token) {
 
-        x.open(method, url);
-        x.onload = function () {
-            if (x.status == 200) {
-                gapiAuthSuccess();
-                onSuccess(x.response);
-            } else {
-                if (x.status == 401) {
-                    console.log("access denied, token removed");
-                    chrome.identity.removeCachedAuthToken({token: token});
-                    gapiAuthError();
-                } else {
-                    gapiAuthSuccess();
-                }
+            console.log("is retry: " + isAuthRetry);
+
+            if (chrome.runtime.lastError && (isAuthRetry || !interactive)) {
+                console.log("cannot get authtoken: " + chrome.runtime.lastError.message);
+                gapiAuthError();
                 onError();
+                return;
             }
-        };
 
-        x.setRequestHeader('Authorization', "Bearer " + token);
-        x.send();
-    });
+            var x = new XMLHttpRequest();
 
+            x.open(method, url);
+            x.onload = function () {
+                if (x.status == 200) {
+                    gapiAuthSuccess();
+                    onSuccess(x.response);
+                } else {
+                    if (x.status == 401) {
+                        if (!isAuthRetry) {
+                            console.log("access denied, token removed " + token);
+                            isAuthRetry = true;
+                            interactive = false;
+                            if (token) {
+                                chrome.identity.removeCachedAuthToken({token: token}, doRequest);
+                            } else {
+                                doRequest();
+                            }
+                            return;
+                        } else {
+                            gapiAuthError();
+                        }
+                    } else {
+                        gapiAuthSuccess();
+                    }
+                    onError();
+                }
+            };
+
+            x.setRequestHeader('Authorization', "Bearer " + token);
+            x.send();
+        });
+    };
+    return doRequest();
 };
 
 var findContactByNumber = function(number) {
@@ -348,10 +369,12 @@ pollContacts();
 
 
 chrome.runtime.onMessage.addListener(
+
     function(request, sender, sendResponse) {
         if (sender.tab) {
             // from content-script
         }
+
 
         console.log("message received: " + request);
         console.log(request);
@@ -359,6 +382,15 @@ chrome.runtime.onMessage.addListener(
         if (request.dialNumber) {
 
             globals["call"](request.dialNumber);
+        } else if (request.request === "requestGoogleAuthorization") {
+            var response = function(autherror) {
+                console.log("sending response " + autherror);
+                sendResponse({autherror: autherror});
+            };
+            gapiRequest("GET", "https://www.google.com/m8/feeds/contacts", [],
+                function() { response(false) },
+                function() { response(!gapiAuthenticated)},
+                request.interactive);
         } else {
             console.log(sender.tab ?
             "from a content script:" + sender.tab.url :
@@ -366,4 +398,6 @@ chrome.runtime.onMessage.addListener(
             if (request.greeting == "hello")
                 sendResponse({farewell: "goodbye"});
         }
+
+        return true;
     });
