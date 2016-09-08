@@ -1,4 +1,4 @@
-define(["react", "reactdom"], function (React, ReactDom) {
+define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestatebar"], function (React, ReactDom, Contact, Buttons, ContactDetails, PhonestateBar) {
 
     var self;
 
@@ -19,48 +19,32 @@ define(["react", "reactdom"], function (React, ReactDom) {
         }
     });
 
-    var DialPadButton = React.createClass({
-        handleClick: function () {
-            this.props.onPress(this.props.value);
-        },
+    var BreadCrumps = React.createClass({
         render: function () {
-            var text;
-            if (this.props.text === undefined) {
-                text = this.props.value;
-            } else {
-                text = this.props.text;
-            }
+            try {
+                var self = this;
 
-            return <a style={ {width: '100%'} } href="#" className="btn waves-effect waves-light"
-                      onClick={ (event) => {
-                          event.stopPropagation();
-                          this.handleClick()
-                      } }>{text}</a>
+                var navElements = this.props.viewStack.map(function (viewElement) {
+                    return <a href="#!" onClick={() => self.props.onNavigate(viewElement[0])}
+                              className="breadcrumb">{viewElement[1]}</a>
+                });
+
+                return <nav>
+                    <div className="nav-wrapper">
+                        <div className="row">
+                            <div className="col s12">
+                                {navElements}
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            } catch (err) {
+                console.log("unable to render breadcrump: " + err);
+                return null;
+            }
         }
     });
 
-    var Contact = React.createClass({
-        handleClick: function () {
-            this.props.onPress(this.props.value);
-        },
-        render: function () {
-            var text;
-            if (this.props.text === undefined) {
-                text = this.props.value;
-            } else {
-                text = this.props.text;
-            }
-
-            return <li className="collection-item avatar">
-                <img src={this.props.img} alt="" className="circle"/>
-                <span className="title">{text}</span>
-                <p onClick={ (event) => {
-                          event.stopPropagation();
-                          this.handleClick()
-                      } }>{this.props.value}</p>
-            </li>
-        }
-    });
 
     var Error = React.createClass({
         render: function () {
@@ -76,9 +60,6 @@ define(["react", "reactdom"], function (React, ReactDom) {
 
     var DialPad = React.createClass({
 
-        getInitialState: function () {
-            return {number: ''};
-        },
 
         setNumber: function (number) {
             this.setState({number: number});
@@ -87,12 +68,12 @@ define(["react", "reactdom"], function (React, ReactDom) {
             }
         },
         addDigit: function (digit) {
-            var newNumber = this.state.number + digit;
+            var newNumber = this.props.number + digit;
             this.setNumber(newNumber);
 
         },
         removeDigit: function () {
-            var newNumber = this.state.number.substr(0, this.state.number.length - 1);
+            var newNumber = this.props.number.substr(0, this.props.number.length - 1);
             this.setNumber(newNumber);
         },
         clearNumber: function () {
@@ -120,10 +101,19 @@ define(["react", "reactdom"], function (React, ReactDom) {
         },
 
         doDial: function () {
-            this.props.onDial(this.state.number);
+            this.props.onDial(this.props.number);
         },
 
         render: function () {
+            try {
+                return this.renderUnsafe();
+            } catch (err) {
+                console.log("unable to render dialpad: " + err);
+                return null;
+            }
+        },
+
+        renderUnsafe: function () {
 
             var actionButton;
             var actionButton2;
@@ -131,53 +121,53 @@ define(["react", "reactdom"], function (React, ReactDom) {
 
             switch (this.props.dialState) {
                 case 'idle':
-                    actionButton = <DialPadButton
+                    actionButton = <Buttons.DialPadButton
                         onPress={ () => this.doDial() } value="dial"/>;
                     break;
                 case 'trying':
                 case 'progress':
                 case 'confirmed':
-                    actionButton = <DialPadButton
+                    actionButton = <Buttons.DialPadButton
                         onPress={ () => this.props.onHangup() } value="hangup"/>;
                     break;
                 case 'incoming':
-                    actionButton = <DialPadButton
+                    actionButton = <Buttons.DialPadButton
                         onPress={ () => this.props.onAccept() } value="accept"/>;
                     break;
                 default:
-                    actionButton = <DialPadButton onPress={ () => {
-                } } value="?"/>
+                    actionButton = <Buttons.DialPadButton onPress={ () => {
+                    } } value="?"/>
             }
 
             switch (this.props.dialState) {
                 case 'incoming':
-                    actionButton2 = <DialPadButton onPress={ () => this.props.onReject() } value="reject"/>
+                    actionButton2 = <Buttons.DialPadButton onPress={ () => this.props.onReject() } value="reject"/>
                     break;
                 default:
-                    actionButton2 = <DialPadButton onPress={ this.clearNumber } value="clear"/>
+                    actionButton2 = <Buttons.DialPadButton onPress={ this.clearNumber } value="clear"/>
             }
 
             var numberButtons = (
                 <div>
                     <div className="row">
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="1"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="2"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="3"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="1"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="2"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="3"/></div>
                     </div>
                     <div className="row">
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="4"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="5"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="6"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="4"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="5"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="6"/></div>
                     </div>
                     <div className="row">
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="7"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="8"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="9"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="7"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="8"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="9"/></div>
                     </div>
                     <div className="row">
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="*"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="0"/></div>
-                        <div className="col s4"><DialPadButton onPress={ this.addDigit } value="#"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="*"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="0"/></div>
+                        <div className="col s4"><Buttons.DialPadButton onPress={ this.addDigit } value="#"/></div>
                     </div>
                 </div>
             );
@@ -186,10 +176,15 @@ define(["react", "reactdom"], function (React, ReactDom) {
                 ? "type number or name to call"
                 : "call with " + this.props.callInfo.remote;
 
+            var numberActionButtons = <div className="row">
+                <div className="col s6">{ actionButton }</div>
+                <div className="col s6">{ actionButton2 }</div>
+            </div>;
+
             return (
                 <div className="container">
                     <div className="row">
-                        <div className="col s12"><NumberInputField number={this.state.number}
+                        <div className="col s12"><NumberInputField number={this.props.number}
                                                                    onKeyPress={ this.handleKeyPress }
                                                                    onKeyDown={ this.handleKeyDown}
                         />
@@ -198,11 +193,8 @@ define(["react", "reactdom"], function (React, ReactDom) {
                     </div>
 
 
-                    { isNaN(this.state.number) ? null : numberButtons }
-                    <div className="row">
-                        <div className="col s6">{ actionButton }</div>
-                        <div className="col s6">{ actionButton2 }</div>
-                    </div>
+                    { isNaN(this.props.number) ? null : numberActionButtons }
+
                 </div>
             )
         }
@@ -213,16 +205,34 @@ define(["react", "reactdom"], function (React, ReactDom) {
             self: this,
             handlers: {},
             getInitialState: function () {
-                return {dialState: 'idle', callInfo: {}, registerState: 'unregistered', contacts: []};
+                return {
+                    dialState: 'idle',
+                    callInfo: {},
+                    registerState: 'unregistered',
+                    contacts: [],
+                    selectedContact: null,
+                    contactFilter: ""
+                };
             },
             setHandler: function (eventName, func) {
                 this["handlers"][eventName] = func;
             },
             setDialState: function (dialState, callInfo = {}) {
-                if (Object.keys(callInfo).length > 0) {
-                    this.setState({dialState: dialState, callInfo: callInfo});
-                } else {
-                    this.setState({dialState: dialState});
+                console.log("setDialState: " + dialState);
+                try {
+                    if (Object.keys(callInfo).length > 0) {
+                        this.setState({dialState: dialState, callInfo: callInfo});
+                        if (callInfo.remoteContact) {
+                            this.setState({callInfoContact: callInfo.remoteContact});
+                        }
+                        if (dialState !== "idle" && this.state.callInfoContact && !this.state.selectedContact) {
+                            this.selectContact(this.state.callInfoContact);
+                        }
+                    } else {
+                        this.setState({dialState: dialState});
+                    }
+                } catch (err) {
+                    console.log("error setting state: " + err);
                 }
             },
             setRegisterState: function (registerState) {
@@ -232,7 +242,11 @@ define(["react", "reactdom"], function (React, ReactDom) {
                 this.setState({contacts: contacts});
             },
             setContactFilter: function (filterString) {
+                this.setState({contactFilter: filterString});
                 this.refs["contacts"].setContactFilter(filterString);
+            },
+            selectContact: function (contact) {
+                this.setState({selectedContact: contact});
             },
             componentDidMount: function () {
                 var self = this;
@@ -246,7 +260,46 @@ define(["react", "reactdom"], function (React, ReactDom) {
                     self.mouseup++;
                 }, false);
             },
+
+            navigateTo: function (viewElementName) {
+                if (viewElementName === "contacts") {
+                    this.selectContact(null);
+                }
+            },
+
             render: function () {
+
+                try {
+
+                    var self = this;
+
+                    var view = this.state.selectedContact
+                        ? [
+                        [["contacts", "Contacts"], ["selectedContact", this.state.selectedContact.title["$t"]]],
+                        <ContactDetails contact={this.state.selectedContact} onDial={self["handlers"]["onDial"]}/>]
+                        : [
+                        [["contacts", "Contacts"]],
+                        this.renderDialpad()];
+
+                    var nav = <BreadCrumps viewStack={view[0]}
+                                           onNavigate={(viewElementName) => self.navigateTo(viewElementName)}/>;
+                    var phonestatebar = <PhonestateBar dialState={self.state.dialState}
+                                                       requestHangup={self["handlers"]["onHangup"]}
+                                                       requestAccept={self["handlers"]["onAccept"]}
+                                                       requestReject={self["handlers"]["onReject"]}
+                    />;
+
+                    return <div>
+                        {nav}
+                        {phonestatebar}
+                        {view[1]}
+                    </div>
+                } catch (err) {
+                    console.log("error rendering dialer: " + err);
+                }
+            },
+
+            renderDialpad: function () {
                 var self = this;
                 var dialpad =
                         <DialPad
@@ -256,16 +309,27 @@ define(["react", "reactdom"], function (React, ReactDom) {
                             onReject={ () => self["handlers"]["onReject"]() }
                             onNumberUpdate={ self.setContactFilter }
                             dialState={this.state.dialState}
+                            number={this.state.contactFilter}
                             callInfo={this.state.callInfo}
                             ref="dialpad"
                         />
                     ;
 
+                console.log("filter: " + this.state.contactFilter);
+
+
                 var selectNumber = function (number) {
                     return self.refs["dialpad"].setNumber(number);
                 };
 
-                var contacts = <Contacts ref="contacts" contacts={this.state.contacts} selectNumber={selectNumber}/>;
+                var contacts = <Contacts
+                    ref="contacts"
+                    contacts={this.state.contacts}
+                    selectNumber={selectNumber}
+                    onSelectContact={this.selectContact}
+                    initialFilter={this.state.contactFilter}
+                    onDial={self["handlers"]["onDial"]}
+                />;
 
                 this["dialpad"] = dialpad;
                 this["contacts"] = contacts;
@@ -287,15 +351,19 @@ define(["react", "reactdom"], function (React, ReactDom) {
         })
         ;
 
+
     var Contacts = React.createClass({
         self: this,
         handlers: {},
 
         getInitialState: function () {
-            return {filterString: ""};
+            return {filterString: this.props.initialFilter};
         },
         setContactFilter: function (filterString) {
             this.setState({filterString: filterString});
+        },
+        getContactFilter: function () {
+            return this.state.filterString;
         },
         contactFilter: function (contact) {
             return (contact.title["$t"] !== undefined
@@ -306,26 +374,21 @@ define(["react", "reactdom"], function (React, ReactDom) {
         render: function () {
 
             var self = this;
-            return <div><ul className="collection">
-                {
-                    (self.state.filterString !== "" && self.props.contacts !== undefined) ?
-                        self.props.contacts
-                            .filter(function (c) {
-                                return ('gd$phoneNumber' in c) && (c["gd$phoneNumber"][0]["uri"] !== undefined)
-                            })
-                            .filter(self.contactFilter)
-                            .slice(0, 5)
-                            .map(function (c) {
-                                console.log(c);
-
-                                var number = "00" + c["gd$phoneNumber"][0]["uri"].replace(/[^0-9]/g, "");
-
-                                return <Contact img={c.photoLink} text={c.title["$t"]} value={number}
-                                                onPress={self.props.selectNumber}/>
-                            })
-                        : null
-                }
-            </ul></div>
+            return <div>
+                <ul className="collection">
+                    {
+                        (self.state.filterString !== "" && self.props.contacts !== undefined) ?
+                            self.props.contacts
+                                .filter(self.contactFilter)
+                                .slice(0, 5)
+                                .map(function (c) {
+                                    return <Contact contact={c} onClick={self.props.onSelectContact}
+                                                    onDial={self.props.onDial}/>
+                                })
+                            : null
+                    }
+                </ul>
+            </div>
         }
     });
 

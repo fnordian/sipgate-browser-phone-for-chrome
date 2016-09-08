@@ -6,7 +6,11 @@ requirejs.config({
         'google-client-api': "node_modules/google-client-api/index",
         'scriptjs': "node_modules/google-client-api/node_modules/scriptjs/dist/script.min",
         'promise': "node_modules/google-client-api/node_modules/promise/index",
-        ui: "generated-jsx/ui"
+        ui: "generated-jsx/ui",
+        contact: "generated-jsx/contact",
+        contactdetails: "generated-jsx/contactdetails",
+        buttons: "generated-jsx/buttons",
+        phonestatebar: "generated-jsx/phonestatebar",
     }
 });
 

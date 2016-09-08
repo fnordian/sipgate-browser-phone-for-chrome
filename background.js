@@ -8,7 +8,8 @@ requirejs.config({
 });
 
 var globals = {
-    dialState: "idle"
+    dialState: "idle",
+    callInfo: {}
 };
 
 chrome.storage.sync.get({
@@ -62,7 +63,6 @@ chrome.storage.sync.get({
                         for (var i in endEvents) {
                             newSession.on(endEvents[i], function () {
                                 setDialState("idle");
-                                session = undefined;
                             });
                         }
 
@@ -97,10 +97,22 @@ chrome.storage.sync.get({
         };
 
         var setDialState = function (dialState, callInfo) {
+            var mergeObjects = function(a, b) {
+                for (var attrname in b) { a[attrname] = b[attrname] };
+            };
+
+            if (dialState === "idle") {
+                session = undefined;
+            }
+
             globals["dialState"] = dialState;
-            globals["callInfo"] = callInfo;
+            mergeObjects(globals["callInfo"], callInfo);
             if (globals["dialStatePopupHandler"]) {
-                globals["dialStatePopupHandler"](dialState, callInfo);
+                try {
+                    globals["dialStatePopupHandler"](dialState, globals["callInfo"]);
+                } catch (err) {
+                    console.log("error in dialStatePopupHandler: " + err);
+                }
             }
             if (dialState != "incoming") {
                 chrome.notifications.clear("newcallnotification");
@@ -118,7 +130,13 @@ chrome.storage.sync.get({
 
 
         globals["call"] = function (url) {
-            setDialState("trying", {remote: url});
+            var urlToNumber = function(url) {
+                var number = url.match(/:(.*)@/)[1];
+                console.log("matched number: " + number);
+                return number;
+            };
+            var contact = findContactByNumber(urlToNumber(url));
+            setDialState("trying", {remote: url, remoteContact: contact});
 
             var eventHandlers = {
                 'progress': function (e) {
@@ -127,7 +145,6 @@ chrome.storage.sync.get({
                 },
                 'failed': function (e) {
                     setDialState("idle");
-                    session = undefined;
                     console.log('call failed with: ' + e);
                     console.log('call failed with cause: ' + e.cause);
                 },
@@ -143,7 +160,6 @@ chrome.storage.sync.get({
                 },
                 'ended': function (e) {
                     setDialState("idle");
-                    session = undefined;
                     console.log('call ended with cause: ');
                     console.log(e);
                     if (e.cause === "RTP Timeout") {
@@ -185,13 +201,13 @@ chrome.storage.sync.get({
 
         var reportIncomingCall = function (caller) {
             console.log("orignator: " + caller);
-            setDialState("incoming", {remote: caller});
             var contact = findContactByNumber(caller);
+            setDialState("incoming", {remote: caller, remoteContact: contact});
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
                 iconUrl: contact.photoLink ? contact.photoLink : "icon.png",
                 title: "incoming call",
-                message: contact.title,
+                message: contact.title["$t"],
                 buttons: [{title: "accept"}, {title: "reject"}],
                 requireInteraction: true,
 
@@ -251,6 +267,15 @@ chrome.storage.sync.get({
             }
 
         });
+
+        var logSession = function () {
+            console.log("session: " + session);
+            setTimeout(function() {
+                logSession()
+            }, 1000);
+        };
+        logSession();
+
     });
 });
 
@@ -330,7 +355,10 @@ var findContactByNumber = function (number) {
             for (i = 0; i < c["gd$phoneNumber"].length; i++) {
                 var cNumber = c["gd$phoneNumber"][i]["uri"].replace(/[^0-9]/g, "");
                 if (cNumber.indexOf(strippedNumber) != -1) {
+                    console.log("match: " + strippedNumber);
                     return true;
+                } else {
+                    console.log("no match: " + strippedNumber);
                 }
             }
         }
@@ -340,7 +368,8 @@ var findContactByNumber = function (number) {
     if (globals["contacts"]) {
         result = globals["contacts"].filter(filterContactByNumber);
         if (result.length > 0) {
-            return {title: result[0].title["$t"], photoLink: result[0].photoLink};
+            //return {title: result[0].title["$t"], photoLink: result[0].photoLink};
+            return result[0];
         }
     }
 
@@ -418,3 +447,16 @@ chrome.runtime.onMessage.addListener(
 
         return true;
     });
+
+var showCallPopUp = function() {
+    chrome.windows.create({
+        url: "callpopup.html",
+//        left: -1,
+//        top: -400,
+        width: 400,
+        height: 200,
+        type: "panel"
+    });
+};
+
+//showCallPopUp();
