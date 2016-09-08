@@ -423,7 +423,7 @@ chrome.runtime.onMessage.addListener(
 
         if (request.dialNumber) {
 
-            globals["call"](request.dialNumber);
+            globals["call"]("sip:" + request.dialNumber + "@sipgate.de");
         } else if (request.request === "requestGoogleAuthorization") {
             var response = function (autherror) {
                 console.log("sending response " + autherror);
