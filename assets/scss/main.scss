@@ -1,0 +1,19 @@
+@import '../../node_modules/materialize-css/sass/components/color';
+
+$primary-color: color("blue-grey", "darken-4") !default;
+$primary-color-light: false !default;
+$primary-color-dark: true !default;
+@if not $primary-color-light {
+  $primary-color-light: lighten($primary-color, 15%);
+}
+@if not $primary-color-dark {
+  $primary-color-dark: darken($primary-color, 15%);
+}
+$secondary-color: color("teal", "lighten-1") !default;
+$success-color: color("green", "base") !default;
+$error-color: color("red", "base") !default;
+
+$link-color: color("light-blue", "darken-1") !default;
+
+
+@import '../../node_modules/materialize-css/sass/materialize';

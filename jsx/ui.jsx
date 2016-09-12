@@ -192,9 +192,6 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
                         </div>
                     </div>
 
-
-                    { isNaN(this.props.number) ? null : numberActionButtons }
-
                 </div>
             )
         }
