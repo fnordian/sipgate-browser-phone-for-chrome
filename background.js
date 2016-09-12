@@ -268,13 +268,35 @@ chrome.storage.sync.get({
 
         });
 
-        var logSession = function () {
-            console.log("session: " + session);
+
+        var checkForSuspend = function (lastCheckTime) {
+            var checkForSuspendInterval = 10000;
+            var now = Date.now();
+            var restartUA = function() {
+                console.log("restart ua");
+                userAgent.stop();
+                userAgent.start();
+            };
+
+            try {
+                if (now - lastCheckTime > checkForSuspendInterval + 100) {
+                    console.log("suspend heuristic triggered");
+                    restartUA();
+                } else if (!userAgent.isRegistered()) {
+                    console.log("ua not connected. retrying...");
+                    restartUA();
+                }
+            } catch (err) {
+                console.log("error checking ua status: " + err);
+            }
+
+
+
             setTimeout(function() {
-                logSession()
-            }, 1000);
+                checkForSuspend(now)
+            }, checkForSuspendInterval);
         };
-        logSession();
+        checkForSuspend(Date.now());
 
     });
 });
