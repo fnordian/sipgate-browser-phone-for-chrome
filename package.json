@@ -19,6 +19,6 @@
   "scripts": {
     "compile-sass": "./node_modules/.bin/node-sass assets/scss/main.scss -o assets/css",
     "compile-jsx": "./node_modules/react-tools/bin/jsx -x jsx jsx generated-jsx",
-    "build-chrome-extension": "npm run-script compile-sass && npm run-script compile-jsx && zip extension.zip *.html *.js *.png *.gif manifest.json  generated-jsx/*.js -r node_modules/jssip/dist/ -r node_modules/react/dist/ -r node_modules/react-dom/dist/  node_modules/requirejs/require.js node_modules/jquery/dist/jquery.min.js node_modules/materialize-css/dist/js/materialize.min.js assets/css/main.css"
+    "build-chrome-extension": "npm run-script compile-sass && npm run-script compile-jsx && zip extension.zip *.html *.js *.png *.gif manifest.json helper/*.js  generated-jsx/*.js -r node_modules/jssip/dist/ -r node_modules/react/dist/ -r node_modules/react-dom/dist/  node_modules/requirejs/require.js node_modules/jquery/dist/jquery.min.js node_modules/materialize-css/dist/js/materialize.min.js assets/css/main.css"
   }
 }
