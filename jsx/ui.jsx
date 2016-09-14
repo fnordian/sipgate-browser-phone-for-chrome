@@ -1,4 +1,4 @@
-define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestatebar"], function (React, ReactDom, Contact, Buttons, ContactDetails, PhonestateBar) {
+define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestatebar", "helper"], function (React, ReactDom, Contact, Buttons, ContactDetails, PhonestateBar, helper) {
 
     var self;
 
@@ -202,6 +202,7 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
             self: this,
             handlers: {},
             getInitialState: function () {
+                console.log("initial state");
                 return {
                     dialState: 'idle',
                     callInfo: {},
@@ -211,19 +212,36 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
                     contactFilter: ""
                 };
             },
+            origSetState: null,
+            setStateStore: function (stateStoreCb) {
+                var self = this;
+                if (!this.origSetState) {
+                    this.origSetState = this.setState;
+                }
+                this.setState = function(newState) {
+                    console.log("new setState");
+                    console.log(newState);
+                    self.origSetState(newState);
+                    stateStoreCb(helper.lang.mergeObjects(this.state, newState));
+                }
+            },
+            restoreState: function (state) {
+                if (state) {
+                    this.setState(state);
+                }
+            },
             setHandler: function (eventName, func) {
                 this["handlers"][eventName] = func;
             },
             setDialState: function (dialState, callInfo = {}) {
                 console.log("setDialState: " + dialState);
+                console.log(callInfo);
                 try {
                     if (Object.keys(callInfo).length > 0) {
                         this.setState({dialState: dialState, callInfo: callInfo});
-                        if (callInfo.remoteContact) {
+                        if (dialState !== "idle" && callInfo.remoteContact) {
                             this.setState({callInfoContact: callInfo.remoteContact});
-                        }
-                        if (dialState !== "idle" && this.state.callInfoContact && !this.state.selectedContact) {
-                            this.selectContact(this.state.callInfoContact);
+                            this.selectContact(callInfo.remoteContact);
                         }
                     } else {
                         this.setState({dialState: dialState});
@@ -240,7 +258,6 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
             },
             setContactFilter: function (filterString) {
                 this.setState({contactFilter: filterString});
-                this.refs["contacts"].setContactFilter(filterString);
             },
             selectContact: function (contact) {
                 this.setState({selectedContact: contact});
@@ -324,7 +341,7 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
                     contacts={this.state.contacts}
                     selectNumber={selectNumber}
                     onSelectContact={this.selectContact}
-                    initialFilter={this.state.contactFilter}
+                    filter={this.state.contactFilter}
                     onDial={self["handlers"]["onDial"]}
                 />;
 
@@ -353,28 +370,28 @@ define(["react", "reactdom", "contact", "buttons", "contactdetails", "phonestate
         self: this,
         handlers: {},
 
-        getInitialState: function () {
-            return {filterString: this.props.initialFilter};
-        },
-        setContactFilter: function (filterString) {
-            this.setState({filterString: filterString});
-        },
-        getContactFilter: function () {
-            return this.state.filterString;
-        },
+
         contactFilter: function (contact) {
             return (contact.title["$t"] !== undefined
-                && contact.title["$t"].toLowerCase().indexOf(this.state.filterString.toLowerCase()) != -1
+                && contact.title["$t"].toLowerCase().indexOf(this.props.filter.toLowerCase()) != -1
             );
         },
 
         render: function () {
+            try {
+                return this.renderUnsafe();
+            } catch (err) {
+                console.error("unable to render Contacts: " + err);
+            }
+        },
+
+        renderUnsafe: function () {
 
             var self = this;
             return <div>
                 <ul className="collection">
                     {
-                        (self.state.filterString !== "" && self.props.contacts !== undefined) ?
+                        (self.props.filter && self.props.filter !== "" && self.props.contacts !== undefined) ?
                             self.props.contacts
                                 .filter(self.contactFilter)
                                 .slice(0, 5)

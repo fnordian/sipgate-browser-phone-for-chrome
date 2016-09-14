@@ -4,6 +4,9 @@ requirejs.config({
         jssip: "jssip/dist/jssip",
         react: "react/dist/react-with-addons.min",
         reactdom: "react-dom/dist/react-dom.min",
+        langHelper: "../helper/lang",
+        contactHelper: "../helper/contact",
+        helper: "../helper/all",
     }
 });
 
@@ -18,7 +21,7 @@ chrome.storage.sync.get({
     password: ""
 }, function (configuration) {
 
-    requirejs(['reactdom', 'jssip', 'react'], function (reactdom, jssip) {
+    requirejs(['reactdom', 'jssip', 'helper'], function (reactdom, jssip, helper) {
 
         jssip.debug.enable('*');
 
@@ -97,16 +100,12 @@ chrome.storage.sync.get({
         };
 
         var setDialState = function (dialState, callInfo) {
-            var mergeObjects = function(a, b) {
-                for (var attrname in b) { a[attrname] = b[attrname] };
-            };
-
             if (dialState === "idle") {
                 session = undefined;
             }
 
             globals["dialState"] = dialState;
-            mergeObjects(globals["callInfo"], callInfo);
+            globals["callInfo"] = helper.lang.mergeObjects(globals["callInfo"], callInfo);
             if (globals["dialStatePopupHandler"]) {
                 try {
                     globals["dialStatePopupHandler"](dialState, globals["callInfo"]);
@@ -135,7 +134,13 @@ chrome.storage.sync.get({
                 console.log("matched number: " + number);
                 return number;
             };
-            var contact = findContactByNumber(urlToNumber(url));
+
+            if (globals["dialState"] !== "idle") {
+                console.log("call already in progress");
+                return;
+            }
+
+            var contact = helper.contact.findContactByNumber(globals["contacts"], urlToNumber(url));
             setDialState("trying", {remote: url, remoteContact: contact});
 
             var eventHandlers = {
@@ -201,7 +206,7 @@ chrome.storage.sync.get({
 
         var reportIncomingCall = function (caller) {
             console.log("orignator: " + caller);
-            var contact = findContactByNumber(caller);
+            var contact = helper.contact.findContactByNumber(globals["contacts"], caller);
             setDialState("incoming", {remote: caller, remoteContact: contact});
             chrome.notifications.create("newcallnotification", {
                 type: "basic",
@@ -369,34 +374,7 @@ var gapiRequest = function (method, url, data, onSuccess, onError, interactive) 
     return doRequest();
 };
 
-var findContactByNumber = function (number) {
-    var strippedNumber = number.match(/^0+(.*)$/)[1];
-    console.log("stripped number: " + strippedNumber);
-    var filterContactByNumber = function (c) {
-        if (c["gd$phoneNumber"]) {
-            for (i = 0; i < c["gd$phoneNumber"].length; i++) {
-                var cNumber = c["gd$phoneNumber"][i]["uri"].replace(/[^0-9]/g, "");
-                if (cNumber.indexOf(strippedNumber) != -1) {
-                    console.log("match: " + strippedNumber);
-                    return true;
-                } else {
-                    console.log("no match: " + strippedNumber);
-                }
-            }
-        }
-        return false;
-    };
 
-    if (globals["contacts"]) {
-        result = globals["contacts"].filter(filterContactByNumber);
-        if (result.length > 0) {
-            //return {title: result[0].title["$t"], photoLink: result[0].photoLink};
-            return result[0];
-        }
-    }
-
-    return {title: number};
-};
 
 var getContacts = function () {
     var enrichContactPhoto = function (contact, token) {

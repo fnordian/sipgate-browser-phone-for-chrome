@@ -11,6 +11,9 @@ requirejs.config({
         contactdetails: "generated-jsx/contactdetails",
         buttons: "generated-jsx/buttons",
         phonestatebar: "generated-jsx/phonestatebar",
+        langHelper: "helper/lang",
+        contactHelper: "helper/contact",
+        helper: "helper/all",
     }
 });
 
@@ -30,6 +33,11 @@ requirejs(['ui', 'reactdom'], function (ui, reactdom) {
         dialer.setRegisterState(registerState);
     };
 
+    dialer.setStateStore(function(state) {
+        globals["popupState"] = state;
+    });
+
+    dialer.restoreState(globals["popupState"]);
 
     dialer.setDialState(globals["dialState"], globals["callInfo"]);
     dialer.setRegisterState(globals["registerState"]);
