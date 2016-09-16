@@ -20,6 +20,13 @@ define([], function () {
                 : [];
         },
 
+        inventContactByNumber: function (number) {
+            return {
+                title: { "$t" : "unknown contact" },
+                "gd$phoneNumber": [ { "$t" : number } ]
+            };
+        },
+
         findContactByNumber: function (contacts, number) {
             var self = this;
             var stripNumber = function (number) {
@@ -59,7 +66,7 @@ define([], function () {
                 }
             }
 
-            return {title: number};
+            return this.inventContactByNumber(number);
         },
     }
 
