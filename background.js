@@ -197,11 +197,15 @@ chrome.storage.sync.get({
         };
 
         var reject = globals["reject"] = function () {
-            session.terminate();
+            if (session) {
+                session.terminate();
+            }
         };
 
         var answer = globals["answer"] = function () {
-            session.answer();
+            if (session) {
+                session.answer();
+            }
         };
 
         var reportIncomingCall = function (caller) {

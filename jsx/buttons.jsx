@@ -36,7 +36,41 @@ define(["react", "reactdom"], function (React, ReactDom) {
                           } }>
                     &#9990; {this.props.number}</div>
             }
+        }),
+
+        BigPhonenumberButton: React.createClass({
+            handleClick: function () {
+                this.props.onPress(this.props.number);
+            },
+            render: function () {
+                var self = this;
+
+                return <div
+                    onClick={ (event) => {
+                        event.stopPropagation();
+                        self.handleClick()
+                    } }>
+                    &#9990; {this.props.number}</div>
+            }
+        }),
+
+        BigMailAddressButton: React.createClass({
+            handleClick: function () {
+                this.props.onPress(this.props.address);
+            },
+            render: function () {
+                var self = this;
+
+                return <div
+                          onClick={ (event) => {
+                              event.stopPropagation();
+                              self.handleClick()
+                          } }>
+                    &#9993; {this.props.address}</div>
+            }
         })
+
+
 
     };
 
