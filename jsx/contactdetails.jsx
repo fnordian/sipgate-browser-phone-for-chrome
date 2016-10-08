@@ -20,6 +20,11 @@ define(["react", "reactdom", "contact", "buttons"], function (React, ReactDom, C
     });
 
     return React.createClass({
+
+        componentDidMount: function() {
+            window.scrollTo(0,0);
+        },
+
         renderPhoneNumbers: function (contactNumbers) {
 
             var self = this;
@@ -79,6 +84,8 @@ define(["react", "reactdom", "contact", "buttons"], function (React, ReactDom, C
             var contactPhotoLink = this.props.contact.photoLink;
 
             console.log(this.props.contact);
+
+
 
             return <div className="card">
                 <div className="card-image waves-effect waves-block waves-light">
