@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Make and receive calls in your browser",
   "dependencies": {
-    "jssip": "~2.0.3",
+    "jssip": "~2.0.6",
     "react": "~15.1.0",
     "react-dom": "~15.1.0",
     "react-tools": "~0.13.3",

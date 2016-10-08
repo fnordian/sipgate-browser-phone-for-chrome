@@ -181,7 +181,12 @@ chrome.storage.sync.get({
 
             var options = {
                 eventHandlers: eventHandlers,
-                mediaConstraints: {'audio': true, 'video': false}
+                mediaConstraints: {'audio': true, 'video': false},
+                pcConfig: {
+                    iceServers: [
+                        {urls: ['stun:stun.sipgate.net']}
+                    ]
+                },
             };
 
             try {
