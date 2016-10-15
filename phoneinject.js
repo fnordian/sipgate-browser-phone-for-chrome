@@ -1,6 +1,9 @@
 window.SipgateApiClient.initiateClickToDial = function (phonelineId, caller, callee) {
 
-    callee = "00" + callee;
+    callee = "00" + callee.replace("+", "");
+
+
+
     console.log("requesting call to" + callee);
 
     var event = new CustomEvent('sipgateCallEvent', {'detail': callee});
